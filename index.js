@@ -1,9 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const fs = require("fs")
+const fs = require("fs");
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const cors = require("cors");
 app.use(cors());
@@ -24,26 +24,40 @@ async function run() {
 	try {
 		await client.connect();
 
-       
-
 		const productsCollection = client
 			.db("WholeSale")
 			.collection("productsCollection");
 
-        app.post('/allProducts', async(req, res)=>{
-            const product = req.body;
-            const result = await productsCollection.insertOne(product)
-            res.send(result)
-        })
+		app.post("/allProducts", async (req, res) => {
+			const product = req.body;
+			const result = await productsCollection.insertOne(product);
+			res.send(result);
+		});
 
-        app.get('/products', async(req, res)=>{
-			const filter = {}
-			if(req.query.minSellingQuantity){
-				filter.minSellingQuantity= {$gte : (req.query.minSellingQuantity)}
+		app.get("/products", async (req, res) => {
+			const filter = {};
+			if (req.query.minSellingQuantity) {
+				filter.minSellingQuantity = { $gte: req.query.minSellingQuantity };
 			}
-            const result = await productsCollection.find(filter).toArray()
-            res.send(result)
-        })
+			if (req.query.category) {
+				filter.category = { $eq: req.query.category };
+			}
+			const result = await productsCollection.find(filter).toArray();
+			res.send(result);
+		});
+
+		app.put("/products/:id", async (req, res) => {
+			const id = req.params.id;
+			const updatedData = req.body;
+
+			const filter = { _id: new ObjectId(id) };
+			const update = {
+				$set: updatedData,
+			};
+
+			const result = await productsCollection.updateOne(filter, update);
+			res.send(result);
+		});
 
 		app.get("/", (req, res) => {
 			res.send("hlw world");
