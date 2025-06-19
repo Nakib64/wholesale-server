@@ -20,9 +20,6 @@ const client = new MongoClient(uri, {
 	},
 });
 
-const products = JSON.parse(fs.readFileSync("products.json", "utf-8"));
-
-
 async function run() {
 	try {
 		await client.connect();
@@ -33,12 +30,21 @@ async function run() {
 			.db("WholeSale")
 			.collection("productsCollection");
 
-             const result =await productsCollection.insertMany(products)
         app.post('/allProducts', async(req, res)=>{
             const product = req.body;
             const result = await productsCollection.insertOne(product)
             res.send(result)
         })
+
+        app.get('/products', async(req, res)=>{
+			const filter = {}
+			if(req.query.minSellingQuantity){
+				filter.minSellingQuantity= {$gte : (req.query.minSellingQuantity)}
+			}
+            const result = await productsCollection.find(filter).toArray()
+            res.send(result)
+        })
+
 		app.get("/", (req, res) => {
 			res.send("hlw world");
 		});
