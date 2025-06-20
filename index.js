@@ -43,6 +43,19 @@ async function run() {
 			res.send(result);
 		});
 
+		app.delete('/allOrders/:id', async(req, res)=>{
+			const id = req.params.id;
+			const filter = {_id : new ObjectId(id)}
+			const result = await orderCollection.deleteOne(filter)
+			res.send(result)
+		})
+		app.delete('/product/:id', async(req, res)=>{
+			const id = req.params.id;
+			const filter = {_id : new ObjectId(id)}
+			const result = await productsCollection.deleteOne(filter)
+			res.send(result)
+		})
+
 		app.post("/allProducts", async (req, res) => {
 			const product = req.body;
 			const result = await productsCollection.insertOne(product);
@@ -56,6 +69,9 @@ async function run() {
 			}
 			if (req.query.category) {
 				filter.category = { $eq: req.query.category };
+			}
+			if (req.query.email) {
+				filter.email = { $eq: req.query.email };
 			}
 			const result = await productsCollection.find(filter).toArray();
 			res.send(result);
