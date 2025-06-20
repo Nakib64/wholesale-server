@@ -28,6 +28,21 @@ async function run() {
 			.db("WholeSale")
 			.collection("productsCollection");
 
+		const orderCollection = client.db("WholeSale").collection("orderCollection");
+
+		app.post("/allOrders", async (req, res) => {
+			const product = req.body;
+			const result = await orderCollection.insertOne(product);
+			res.send(result);
+		});
+
+		app.get("/allOrders", async (req, res) => {
+			const filter = {};
+			filter.email = { $eq: req.query.email };
+			const result = await orderCollection.find(filter).toArray();
+			res.send(result);
+		});
+
 		app.post("/allProducts", async (req, res) => {
 			const product = req.body;
 			const result = await productsCollection.insertOne(product);
@@ -54,6 +69,27 @@ async function run() {
 			const update = {
 				$set: updatedData,
 			};
+
+			const result = await productsCollection.updateOne(filter, update);
+			res.send(result);
+		});
+
+		app.put("/product/:id", async (req, res) => {
+			const id = req.params.id;
+			const updatedData = req.body;
+			const { quan, dec } = updatedData;
+			const quantity = parseInt(quan);
+			const filter = { _id: new ObjectId(id) };
+			let update = {}
+			if (dec) {
+				 update = {
+					$inc: { mainQuantity: -quantity },
+				};
+			}else{
+				 update = {
+				$inc : {mainQuantity : quantity}
+			}
+			}
 
 			const result = await productsCollection.updateOne(filter, update);
 			res.send(result);
