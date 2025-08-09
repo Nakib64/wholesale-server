@@ -87,7 +87,13 @@ async function run() {
 				}
 
 				const products = await productsCollection
-					.find({ name: { $regex: searchedKey, $options: "i" } }) // case-insensitive search
+					.find({
+						$or: [
+							{ name: { $regex: searchedKey, $options: "i" } },
+							{ category: { $regex: searchedKey, $options: "i" } },
+							{ brand: { $regex: searchedKey, $options: "i" } },
+						],
+					}) // case-insensitive search
 					.limit(10)
 					.toArray();
 
