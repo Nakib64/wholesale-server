@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const cors = require("cors");
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASSWORD}@cluster0.rcnlifl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -43,18 +43,18 @@ async function run() {
 			res.send(result);
 		});
 
-		app.delete('/allOrders/:id', async(req, res)=>{
+		app.delete("/allOrders/:id", async (req, res) => {
 			const id = req.params.id;
-			const filter = {_id : new ObjectId(id)}
-			const result = await orderCollection.deleteOne(filter)
-			res.send(result)
-		})
-		app.delete('/product/:id', async(req, res)=>{
+			const filter = { _id: new ObjectId(id) };
+			const result = await orderCollection.deleteOne(filter);
+			res.send(result);
+		});
+		app.delete("/product/:id", async (req, res) => {
 			const id = req.params.id;
-			const filter = {_id : new ObjectId(id)}
-			const result = await productsCollection.deleteOne(filter)
-			res.send(result)
-		})
+			const filter = { _id: new ObjectId(id) };
+			const result = await productsCollection.deleteOne(filter);
+			res.send(result);
+		});
 
 		app.post("/allProducts", async (req, res) => {
 			const product = req.body;
@@ -77,6 +77,27 @@ async function run() {
 			res.send(result);
 		});
 
+		app.get("/search", async (req, res) => {
+			try {
+				const { searchedKey } = req.query;
+
+				if (!searchedKey || searchedKey.trim().length === 0) {
+					// Bad request: missing or empty search key
+					return res.status(400).json({ error: "search your product..." });
+				}
+
+				const products = await productsCollection
+					.find({ name: { $regex: searchedKey, $options: "i" } }) // case-insensitive search
+					.limit(10)
+					.toArray();
+
+				res.json(products);
+			} catch (error) {
+				console.error("Search error:", error);
+				res.status(500).json({ error: "Internal server error" });
+			}
+		});
+
 		app.put("/products/:id", async (req, res) => {
 			const id = req.params.id;
 			const updatedData = req.body;
@@ -96,15 +117,15 @@ async function run() {
 			const { quan, dec } = updatedData;
 			const quantity = parseInt(quan);
 			const filter = { _id: new ObjectId(id) };
-			let update = {}
+			let update = {};
 			if (dec) {
-				 update = {
+				update = {
 					$inc: { mainQuantity: -quantity },
 				};
-			}else{
-				 update = {
-				$inc : {mainQuantity : quantity}
-			}
+			} else {
+				update = {
+					$inc: { mainQuantity: quantity },
+				};
 			}
 
 			const result = await productsCollection.updateOne(filter, update);
