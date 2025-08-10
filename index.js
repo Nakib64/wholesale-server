@@ -29,12 +29,29 @@ async function run() {
 			.collection("productsCollection");
 
 		const orderCollection = client.db("WholeSale").collection("orderCollection");
+		const placedOrdersCollection = client.db('WholeSale').collection("placedOrders")
 
 		app.post("/allOrders", async (req, res) => {
 			const product = req.body;
 			const result = await orderCollection.insertOne(product);
 			res.send(result);
 		});
+
+		app.post('/placedOrder', async(req, res)=>{
+			const order = req.body;
+
+			const result = await placedOrdersCollection.insertOne(order)
+			res.send(result)
+		})
+
+		app.get("/placedOrder", async(req, res)=>{
+			const {email} = req.params
+
+			if(email){
+				const placedOrders = await placedOrdersCollection.find({email: email}).toArray()
+				res.send(placedOrders)
+			}
+		})
 
 		app.get("/allOrders", async (req, res) => {
 			const filter = {};
@@ -47,6 +64,12 @@ async function run() {
 			const id = req.params.id;
 			const filter = { _id: new ObjectId(id) };
 			const result = await orderCollection.deleteOne(filter);
+			res.send(result);
+		});
+		app.get("/products/:id", async (req, res) => {
+			const id = req.params.id;
+			const filter = { _id: new ObjectId(id) };
+			const result = await productsCollection.findOne(filter);
 			res.send(result);
 		});
 		app.delete("/product/:id", async (req, res) => {
