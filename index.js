@@ -29,7 +29,10 @@ async function run() {
 			.collection("productsCollection");
 
 		const orderCollection = client.db("WholeSale").collection("orderCollection");
-		const placedOrdersCollection = client.db('WholeSale').collection("placedOrders")
+		const placedOrdersCollection = client
+			.db("WholeSale")
+			.collection("placedOrders");
+		const commentsCollection = client.db("WholeSale").collection("commentsCollection")
 
 		app.post("/allOrders", async (req, res) => {
 			const product = req.body;
@@ -37,22 +40,25 @@ async function run() {
 			res.send(result);
 		});
 
-		app.post('/placedOrder', async(req, res)=>{
+		app.post("/placedOrder", async (req, res) => {
 			const order = req.body;
 
-			const result = await placedOrdersCollection.insertOne(order)
-			res.send(result)
-		})
+			const result = await placedOrdersCollection.insertOne(order);
+			res.send(result);
+		});
 
-		app.get("/placedOrder", async(req, res)=>{
-			const {email} = req.params
-
-			if(email){
-				const placedOrders = await placedOrdersCollection.find({email: email}).toArray()
-				res.send(placedOrders)
+		app.get("/placedOrder", async (req, res) => {
+			const { email } = req.query;
+			console.log(email);
+			if (email) {
+				const placedOrders = await placedOrdersCollection
+					.find({ email: email })
+					.toArray();
+				res.send(placedOrders);
+				console.log(placedOrders);
 			}
-		})
- 
+		});
+
 		app.get("/allOrders", async (req, res) => {
 			const filter = {};
 			filter.email = { $eq: req.query.email };
@@ -159,6 +165,45 @@ async function run() {
 
 			const result = await productsCollection.updateOne(filter, update);
 			res.send(result);
+		});
+
+		app.get("/api/comments/top", async (req, res) => {
+			try {
+				const comments = await commentsCollection
+					.find()
+					.sort({ createdAt: -1 })
+					.limit(5)
+					.toArray();
+				res.json(comments);
+			} catch (error) {
+				console.error(error);
+				res.status(500).json({ error: "Failed to fetch comments" });
+			}
+		});
+
+		/**
+		 * @route POST /api/comments
+		 * @desc Add new comment
+		 */
+		app.post("/api/comments", async (req, res) => {
+			try {
+				const { author, text } = req.body;
+				if (!author || !text) {
+					return res.status(400).json({ error: "Author and text are required" });
+				}
+
+				const newComment = {
+					author,
+					text,
+					createdAt: new Date(),
+				};
+
+				const result = await commentsCollection.insertOne(newComment);
+				res.json({ ...newComment, _id: result.insertedId });
+			} catch (error) {
+				console.error(error);
+				res.status(500).json({ error: "Failed to add comment" });
+			}
 		});
 
 		app.get("/", (req, res) => {
