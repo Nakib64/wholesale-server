@@ -181,10 +181,7 @@ async function run() {
 			}
 		});
 
-		/**
-		 * @route POST /api/comments
-		 * @desc Add new comment
-		 */
+	
 		app.post("/api/comments", async (req, res) => {
 			try {
 				const { author, text } = req.body;
